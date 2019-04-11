@@ -1,0 +1,241 @@
+Lab 6 Psuedo Code
+Galilea Olvera, Reagan Wilcox, Julia Meissner
+
+Compiler directives 
+	#include <c8051_SDCC.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <i2c.h>
+
+Function prototypes
+Void Port_Init(void)
+Void ADC_Init(void)
+Unsigned int read_AD_input(unsigned char n)
+Void XBR0_Init
+	Void SMB_Init(void)
+Void PCA_Init(void)
+void PCA_ISR ( void ) __interrupt 9
+Unsigned int Change_Pulsewidth (int mode, unsigned int value)
+Unsigned int Read_Ranger(void)
+Unsigned int Read_Compass(void)
+Void Set_Heading(void);
+Void Set_KP(void);
+	Void Set_KD(void);
+	Desired_range = 50
+	PW_Neut = 2765;
+	PW_Min = 2028;
+	PW_Mx = 3502;
+	Signed int tmp_PW;
+	
+
+Declare global variables
+Unsigned int counts;			
+	Unsigned int desired_heading;	//user-input
+Unsigned int kd;			//
+Unsigned int kd;			//
+Unsigned int battery;			//to be read in P1.3 and AD-converted
+Unsigned char print; 			//print flag
+Unsigned char read_ranger;		//ranger flag
+Unsigned char read_heading;	//compass flag
+Unsigned int Range;			//for storing Read_Ranger
+Unsigned int Heading;		//for storing Read_Compass
+Unsigned int error; 			//
+
+Main function
+	//Declare local variables
+		char input;
+		unsigned int keypad_reading;
+	//Initialization functions
+		Sys_Init(); 
+putchar(' '); 
+Port_Init();  
+ADC_Init();  
+XBR0_Init(); 
+PCA_Init(); 
+SMB_Init();
+//Setup				
+calibrate_compass(void);
+Calculate_Rotation();
+		Set_Values();  //set user inputs for heading, kp, kd
+		Set_Thrust_Angle();
+		Run Fans
+// Set_Speed();  Set_Direction();
+	While loop for continuous run
+		If read_ranger flag is set
+			Clear flag
+			Range = Read_ranger();
+		If read_heading flag is set
+			Clear flag
+			Heading = Read_Compass();
+		If print flag is set
+			Clear flag
+			Printf desired_heading, actual_heading, and ranger_reading. 
+		If a (TBD) key is hit
+			calibrate_compass(void);
+End of Main
+
+//Functions
+Initializations, ISR, Basic Setup
+//initializations
+Void Port_Init(void)
+P0.4, P0.5, P0.6 and P0.7  in push-pull
+Void ADC_Init(void)
+	Vref to use internal reference voltage
+	Enable A/D converter (ADC1)
+	A/D converter gain to 1
+Unsigned int read_AD_input(unsigned char n)
+	 Set P1.n as the analog input for ADC1 
+	 Clear the “Conversion Completed” f
+	 Initiate A/D conversion
+	 Wait for conversion
+ Return digital value in ADC1 register 
+Void XBR0_Init
+	Configure crossbar as directed // 0x25
+// 4 CCMs with CEX outputs on Port pins P0.4, P0.5, P0.6 and P0.7
+	Void SMB_Init(void)
+		set SCL to 100KHz (actual freq ~ 94,594Hz)
+		bit 6 of SMB0CN, enable the SMBus
+Void PCA_Init(void)
+	Set all registers to 16 bit compare mode
+	Enable PCA counter, CF interrupt (SYSCLK/12), global and PCA interrupts
+	DO WE NEED TO INITIALIZE LCD SOMEHOW?
+
+//isr
+Void PCA_ISR ( void ) __interrupt 9
+If interrupt flag true CF
+	Reset PCA
+Counts ++
+	Set interrupt flag to false 0
+	If counts are divisible by 5 /every 100 ms
+Set print flag 
+If counts are divisible by 2 //every 40 ms
+	Set read_ranger flag
+	Set read_heading flag
+
+	Else
+		Clears all other interrupts
+
+//basic user-input setup
+Void Set_Values(void)
+		//set heading
+Clear lcd
+		Print “enter a desired heading”
+		Read input
+		Desired_heading = input
+		//set kp
+Clear lcd
+		Print “enter a proportional gain”
+		Read input
+		KP = input
+//set kd
+Clear lcd
+Print “enter a derivative gain”
+		Read input
+		KD = input		
+
+	Void calibrate_compass(void) //
+		//reference
+	
+Run The Fans //similar to drive_motor function
+Void Run_Rudders(void)
+	Run Right @ neutral - rudder_PW
+	Run Left  @ neutral + rudder_PW //left and right in opposite directions
+Void Run_Thrust(void)
+	Controlled with servo PW //auto updated in Change_PW
+
+
+REFER TO WKSHT 11
+
+Adjust The fans
+Unsigned int Change_Pulsewidth(int mode, unsigned int value)
+	Initialize local variable int error
+	Initialize local variable unsigned int error
+		//Limit PW between 2000 and 35000 !!
+
+		/* Code given on lms 
+error = desired_heading–heading;
+tmp_pw = (long)Kp*error+(long)Kd*(error-previous_error)+RUDDER_CENTER;
+ if (tmp_pw > (long)RUDDER_LEFT) 
+tmp_pw = RUDDER_LEFT;
+else if (tmp_pw < (long)RUDDER_RIGHT) 
+tmp_pw = RUDDER_RIGHT;
+ rudder_pw = (unsigned int)tmp_pw; previous_error = error;
+*/
+
+	If mode =0 //compass adjustments
+		If value is less than 30
+			Set Range pw to center pw
+		Else
+			Set range pw to kpr *(value -30) + center pw
+		Return range pw
+		Else if mode =1 //f
+If error is greater than 1800
+	 error = - 3600
+if error is less than -1800
+	Set error  =+ 3600
+ temp_servo = kp *error + center pw
+If temp_servo > maxpw
+	temp_serco = maxpw
+If temp_servo < minpw
+	temp_servo t= minpw
+		Set c_pw to temp_servo 
+		Return c_pw
+	Return 0
+
+Read Values From Components
+unsigned int Read_Ranger(void)
+	Initialize char array data with length of 2 
+	Initialize unsigned int range
+	Initialize unsigned char with address of ranger
+	read two bytes, starting at reg 2
+	combine the two data values into one value range
+	Return range
+unsigned int Read_Compass(void)
+Initialize char array data with length of 2 
+	unsigned int comp
+	Initialize unsigned char with address of compass
+	Read function -  two bytes and starting at reg 2
+Return comp	
+Void Read_Battery(void)
+	Read_ADC at P1.3
+	ADC conversion //battery V = 4.235 x ADC voltage or 39.7 x ADC0  ⇒ in mV
+	Battery = voltage in mV
+
+\Calculate_Rotation();
+
+	
+	//////////////// debugging functions	
+	Void Set_Speed(void)
+		Read  Compass
+		Wait specified time
+		Read Compass again
+		Calculate rotational velocity (change in angle over time)
+		while rotational velocity is over a specified value
+			kd = 0;
+‘F’ increases kp
+	‘S’ decreases kp
+	‘K’ sets kp to current kp and exits loop
+	change_pulsewidth
+
+				
+	Void Set_Direction(void)
+kd = kp = 0
+While (1) //Introduce derivative gain and test different values
+	print “setting kd”
+	‘F’ increases kd
+	‘S’ decreases kd
+	‘K’ sets kd to current kd and exits loop
+	Change_pulsewidth
+	Calculate rotational velocity of fan
+		If above threshold, use P control to reduce
+		Once P control
+
+
+Set_Thrust_Angle();
+		While (1)
+If ‘F’ increases heading
+If ‘S’ decreases heading
+Change_Pulsewidth
+If ‘K’ sets heading and exits loop
+		
+
