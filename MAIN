@@ -28,7 +28,7 @@ void set_values(void);
 unsigned int MIN_FAN = 2765;
 unsigned int RUDDER_CENTER = 2028;
 unsigned int MAX_FAN = 3502;
-unsigned int RUDDER_PW = RUDDER_CENTER;
+unsigned int RUDDER_PW = 2028;
 signed int tmp_PW;
 unsigned int counts;			
 unsigned int desired_heading;		//user-input
@@ -170,7 +170,7 @@ void set_values(void)
 
 	lcd_print("Pick a derivative gain\r\nkd = : ");
 	Kd = kpd_input(0);
-	lcd_clear();unsigned char addr=0xE0; // the address of the ranger is 0xE0
+	lcd_clear();
 }
 	
 void calibrate_compass(void)
