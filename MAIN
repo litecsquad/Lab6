@@ -25,9 +25,9 @@ void set_values(void);
 
 //Global Variables
 //unsigned char desired_range = 50;
-//unsigned int PW_Neut = 2765;
-//unsigned int PW_Min = 2028;
-//unsigned int PW_Max = 3502;
+//unsigned int MIN_FAN = 2765;
+//unsigned int RUDDER_CENTER = 2028;
+//unsigned int MAX_FAN = 3502;
 signed int tmp_PW;
 unsigned int counts;			
 unsigned int desired_heading;		//user-input
@@ -174,20 +174,21 @@ void set_values(void)
 	
 void calibrate_compass(void)
 {
+	
 	//figure out;
 }
 
 //Run The Fans: similar to drive_motor function
 void run_rudders(void)
 {
-	char x = 2;
-	//Run Right @ neutral - rudder_PW
-	//Run Left  @ neutral + rudder_PW //left and right in opposite directions
+	PCA0CP2 = 0xFFFF - (RUDDER_CENTER + Fan_PW); //Run Left  @ neutral + rudder_PW
+	PCA0CP3 = 0xFFFF - (RUDDER_CENTER - Fan_PW); //Run Right @ neutral - rudder_PW
+	//left and right in opposite directions
 }
 
 void run_thrust(void)
 {
-	char x = 1;
+	
 	//Controlled with servo PW //auto updated in Change_PW
 
 }
