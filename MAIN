@@ -1,7 +1,7 @@
-Lab 6 Psuedo Code
-Galilea Olvera, Reagan Wilcox, Julia Meissner
+/*Lab 6 Psuedo Code
+Galilea Olvera, Reagan Wilcox, Julia Meissner */
 
-Compiler directives 
+//Compiler directives 
 #include <c8051_SDCC.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +15,7 @@ void SMB_Init(void);
 void PCA_Init(void);
 
 void PCA_ISR(void) __interrupt 9;
-void read_AD_input(unsigned char n);
+void read_AD_input(void);
 void read_ranger(void);
 void read_compass(void);
 
@@ -24,22 +24,22 @@ void set_values(void);
 
 
 //Global Variables
-Desired_range = 50;
-PW_Neut = 2765;
-PW_Min = 2028;
-PW_Mx = 3502;
+//unsigned char desired_range = 50;
+//unsigned int PW_Neut = 2765;
+//unsigned int PW_Min = 2028;
+//unsigned int PW_Max = 3502;
 signed int tmp_PW;
-	
 unsigned int counts;			
 unsigned int desired_heading;		//user-input
-unsigned int Kd;			//
+unsigned int Kp;			//
 unsigned int Kd;			//
 unsigned int battery;			//to be read in P1.3 and AD-converted
 unsigned char print; 			//print flag
-unsigned char read_ranger;		//ranger flag
-unsigned char read_heading;		//compass flag
-unsigned int Range;			//for storing Read_Ranger
-unsigned int Heading;			//for storing Read_Compass
+unsigned char r_ranger;			//ranger flag
+unsigned char r_heading;		//compass flag
+unsigned char r_print;			//print flag
+unsigned int range;			//for storing Read_Ranger
+unsigned int heading;			//for storing Read_Compass
 //Unsigned int error; 			//
 
 void main(void)
@@ -79,7 +79,7 @@ void main(void)
 	If a (TBD) key is hit
 		calibrate_compass(void);
 	*/
-} //end of mian
+} //end of main
 
 //Functions: Initializations, ISR, Basic Setup
 void Port_Init(void)		//Do not touch
@@ -95,14 +95,6 @@ void ADC_Init(void)		//Do not touch
 	ADC1CF |= 0x01; /* Set A/D converter gain to 1 */
 }
 
-unsigned char read_AD_input(unsigned char n) // Do not touch
-{
-	AMX1SL = n; /* Set P1.n as the analog input for ADC1 */
-	ADC1CN = ADC1CN & ~0x20; /* Clear the “Conversion Completed” flag */
-	ADC1CN = ADC1CN | 0x10; /* Initiate A/D conversion */
-	while ((ADC1CN & 0x20) == 0x00); /* Wait for conversion to complete */
-	return ADC1; /* Return digital value in ADC1 register */
-}
 
 void XBR0_Init(void)
 {
@@ -143,7 +135,7 @@ void PCA_ISR(void) __interrupt 9
 		//every two overflows (~40ms), read from compass
 		if((counts %2) == 0)
 		{
-			r_comp = 1;
+			r_heading = 1;
 		}
 		//every 4 overflows (~80ms), read rager
 		if((counts %4) == 0)
@@ -165,6 +157,7 @@ void PCA_ISR(void) __interrupt 9
 
 //basic user-input setup
 void set_values(void)
+{
 	lcd_print("Pick a desired heading for the servo\r\nDesired Heading: ");
 	desired_heading = kpd_input(0);
 	desired_heading*=10;
@@ -176,7 +169,8 @@ void set_values(void)
 
 	lcd_print("Pick a derivative gain\r\nkd = : ");
 	Kd = kpd_input(0);
-	lcd_clear();*/
+	lcd_clear();unsigned char addr=0xE0; // the address of the ranger is 0xE0
+}
 	
 void calibrate_compass(void)
 {
@@ -186,22 +180,23 @@ void calibrate_compass(void)
 //Run The Fans: similar to drive_motor function
 void run_rudders(void)
 {
-	Run Right @ neutral - rudder_PW
-	Run Left  @ neutral + rudder_PW //left and right in opposite directions
+	char x = 2;
+	//Run Right @ neutral - rudder_PW
+	//Run Left  @ neutral + rudder_PW //left and right in opposite directions
 }
 
 void run_thrust(void)
 {
+	char x = 1;
 	//Controlled with servo PW //auto updated in Change_PW
 
 }
 
 void read_ranger(void)
 {
-	unsigned char Data[2];
-	unsigned int range = 0;
-	unsigned char addr=0xE0; // the address of the ranger is 0xE0
-
+	unsigned char addr = 0xE0; // the address of the ranger is 0xE0
+	unsigned int Data[2];
+	
 	i2c_read_data(addr, 2, Data, 2);
 	
 	range = (((unsigned int)Data[0] << 8) | Data[1]);
@@ -210,13 +205,11 @@ void read_ranger(void)
 void read_compass(void)
 {
 	unsigned char addr = 0xC0; // the address of the sensor, 0xC0 for the compass
-	unsigned char Data[2]; // an array with a length of 2
-	unsigned int comp;
+	unsigned int Data[2]; // an array with a length of 2
 	i2c_read_data(addr, 2, Data, 2); // read two byte, starting at reg 2
 
-	comp =(((unsigned int)Data[0] << 8) | Data[1]); //combine the two data values into one value
-								
-	return comp;
+	heading =(((unsigned int)Data[0] << 8) | Data[1]); //combine the two data values into one value
+
 }
 
 void read_battery(void) // Do not touch
@@ -225,12 +218,12 @@ void read_battery(void) // Do not touch
     ADC1CN = ADC1CN & ~0x20; /* Clear the “Conversion Completed” flag */
     ADC1CN = ADC1CN | 0x10; /* Initiate A/D conversion */
     while ((ADC1CN & 0x20) == 0x00); /* Wait for conversion to complete */
-    //ADC conversion //battery V = 4.235 x ADC voltage or 39.7 x ADC0  ⇒ in m
+    //ADC conversion //battery V = 4.235 x ADC voltage or 39.7 x ADC0  ? in m
     //battery = voltage in mV
     battery = ADC1; /* Return digital value in ADC1 register */    
 }
 
-\\Calculate_Rotation();
+//Calculate_Rotation();
 
 	
 //////////////// debugging functions	
@@ -268,4 +261,3 @@ If ‘K’ sets heading and exits loop
 
 //unsigned int Change_Pulsewidth(int mode, unsigned int value)
 //REFER TO WKSHT 11
-
