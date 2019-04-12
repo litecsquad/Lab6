@@ -1,1 +1,74 @@
+void steer_pw() 
+{ 
+    char stray;
 
+	stray = range - nominal_height;
+
+    //reasonable change of ±40 cm should modify the desired heading 
+    
+	if (stray < -40)
+	{
+		stray = -40;
+	}
+	else if (stray > 40)
+	{
+		stray = 40;
+	}
+	//printf("\n\rstray: %d", stray);
+
+	/*while (one == 0)
+	{
+		prev_error = error;
+		one = 1;
+	}*/
+
+    PW_STEER = (long)PW_NEUTRAL+(long)kp*(long)error/10 + (long)kd*(long)(error-prev_error);
+	PW_RIGHT = PW_NEUTRAL + (PW_NEUTRAL - PW_STEER);
+
+    if (PW_STEER < PW_MIN) 
+    { 
+        PW_STEER = PW_MIN; 
+    } 
+
+    if (PW_STEER > PW_MAX) 
+    { 
+        PW_STEER = PW_MAX; 
+    } 
+	
+	if (PW_RIGHT < PW_MIN) 
+    { 
+        PW_RIGHT = PW_MIN; 
+    } 
+    if (PW_RIGHT > PW_MAX) 
+    { 
+        PW_RIGHT = PW_MAX; 
+    } 
+
+	prev_error = error;
+
+    //BACK
+	/*PCA0CPL0 = 0xFFFF - (int)PW_STEER; 
+    PCA0CPH0 = (0xFFFF - (int)PW_STEER) >> 8;
+	
+    //LEFT
+	PCA0CPL2 = 0xFFFF - (int)PW_STEER; 
+    PCA0CPH2 = (0xFFFF - (int)PW_STEER) >> 8;
+
+    //RIGHT
+	PCA0CPL3 = 0xFFFF - (int)PW_RIGHT; 
+    PCA0CPH3 = (0xFFFF - (int)PW_RIGHT) >> 8;*/
+} 
+
+
+unsigned int Read_Ranger()
+{
+	unsigned char Data[2];
+	unsigned int range = 0;
+	unsigned char addr=0xE0; // the address of the ranger is 0xE0
+
+	i2c_read_data(addr, 2, Data, 2);
+	
+	range = (((unsigned int)Data[0] << 8) | Data[1]);
+	
+	return range;
+}
